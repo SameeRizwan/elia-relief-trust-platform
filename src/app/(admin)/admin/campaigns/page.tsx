@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import { collection, getDocs } from "firebase/firestore";
@@ -38,10 +39,12 @@ export default function CampaignsPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
-                <Button className="bg-[#0F5E36] hover:bg-[#0b4628] text-white gap-2">
-                    <Plus size={16} />
-                    New Campaign
-                </Button>
+                <Link href="/admin/campaigns/new">
+                    <Button className="bg-[#0F5E36] hover:bg-[#0b4628] text-white gap-2">
+                        <Plus size={16} />
+                        New Campaign
+                    </Button>
+                </Link>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

@@ -19,7 +19,6 @@ const sidebarItems = [
     { name: "Donations", href: "/admin/donations", icon: BarChart3 },
     { name: "Orphans", href: "/admin/orphans", icon: Users },
     { name: "Users", href: "/admin/users", icon: Users },
-    { name: "Content (CMS)", href: "/admin/cms", icon: FileText },
     { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
