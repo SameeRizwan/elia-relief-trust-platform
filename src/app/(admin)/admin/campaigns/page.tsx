@@ -11,38 +11,41 @@ import { Campaign } from "@/types";
 export default function CampaignsPage() {
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
-        // In a real app, listen to Firestore
-        setLoading(false);
-        // Mock data for now to visualize table
-        setCampaigns([
-            {
-                id: "1",
-                title: "Clean Water Project",
-                category: "Water",
-                goalAmount: 5000,
-                raisedAmount: 3200,
-                active: true,
-                description: "Providing water...",
-                slug: "clean-water",
-                country: "Yemen",
-                imageUrl: "",
-                isUrgent: false,
-                isZakatEligible: true,
-                createdAt: ""
+        const fetchCampaigns = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, "campaigns"));
+                const fetchedCampaigns: Campaign[] = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    createdAt: doc.data().createdAt?.toDate?.().toISOString() || new Date().toISOString()
+                })) as Campaign[];
+                setCampaigns(fetchedCampaigns);
+            } catch (error) {
+                console.error("Error fetching campaigns:", error);
+            } finally {
+                setLoading(false);
             }
-        ]);
+        };
+
+        fetchCampaigns();
     }, []);
+
+    const filteredCampaigns = campaigns.filter(campaign =>
+        campaign.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        campaign.category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Appeals</h1>
                 <Link href="/admin/campaigns/new">
                     <Button className="bg-[#0F5E36] hover:bg-[#0b4628] text-white gap-2">
                         <Plus size={16} />
-                        New Campaign
+                        New Appeal
                     </Button>
                 </Link>
             </div>
@@ -53,7 +56,9 @@ export default function CampaignsPage() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Search campaigns..."
+                            placeholder="Search appeals..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F5E36]"
                         />
                     </div>
@@ -70,7 +75,7 @@ export default function CampaignsPage() {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {campaigns.map((campaign) => (
+                        {filteredCampaigns.map((campaign) => (
                             <tr key={campaign.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="font-medium text-gray-900">{campaign.title}</div>
@@ -83,9 +88,9 @@ export default function CampaignsPage() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden mb-1">
-                                        <div className="bg-[#0F5E36] h-1.5 rounded-full" style={{ width: '60%' }} />
+                                        <div className="bg-[#0F5E36] h-1.5 rounded-full" style={{ width: `${Math.min(((campaign.raisedAmount || 0) / (campaign.goalAmount || 1)) * 100, 100)}%` }} />
                                     </div>
-                                    <div className="text-xs text-gray-500">${campaign.raisedAmount} / ${campaign.goalAmount}</div>
+                                    <div className="text-xs text-gray-500">£{campaign.raisedAmount?.toLocaleString()} / £{campaign.goalAmount?.toLocaleString()}</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${campaign.active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
@@ -98,6 +103,13 @@ export default function CampaignsPage() {
                                 </td>
                             </tr>
                         ))}
+                        {filteredCampaigns.length === 0 && !loading && (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                    No appeals found matching "{searchQuery}"
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>

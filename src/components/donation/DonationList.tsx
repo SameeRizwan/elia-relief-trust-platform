@@ -1,14 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { CAUSES } from "@/data/mockData";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Info, ShoppingCart } from "lucide-react";
+import { Check, Info, Heart } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const CATEGORIES = ["Popular Appeals", "Other Appeals"];
 const PRESET_AMOUNTS = [20, 50, 100, 250];
+
+interface Cause {
+    id: string;
+    title: string;
+    description: string;
+    category: string;
+}
 
 export function DonationList() {
     const { addToCart } = useCart();
@@ -16,10 +24,31 @@ export function DonationList() {
     const [expandedCauseId, setExpandedCauseId] = useState<string | null>(null);
     const [amount, setAmount] = useState<number>(50);
     const [customAmount, setCustomAmount] = useState<string>("");
+    const [causes, setCauses] = useState<Cause[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Simple logic to split causes for the tabs
-    const popularCauses = CAUSES.slice(0, 5);
-    const otherCauses = CAUSES.slice(5);
+    useEffect(() => {
+        const fetchCauses = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, "campaigns"));
+                const fetchedData = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })) as Cause[];
+
+                setCauses(fetchedData);
+            } catch (error) {
+                console.error("Error fetching donation list:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCauses();
+    }, []);
+
+    const popularCauses = causes.slice(0, 5);
+    const otherCauses = causes.slice(5);
 
     const displayedCauses = activeTab === "Popular Appeals" ? popularCauses : otherCauses;
 
@@ -33,7 +62,7 @@ export function DonationList() {
         }
     };
 
-    const handleAddToCart = (cause: any) => {
+    const handleAddToCart = (cause: Cause) => {
         const finalAmount = customAmount ? parseFloat(customAmount) : amount;
         if (!finalAmount || finalAmount <= 0) return;
 
@@ -41,12 +70,15 @@ export function DonationList() {
             id: cause.id,
             title: cause.title,
             amount: finalAmount,
-            type: "single" // default for now
+            type: "single"
         });
 
-        // Optional user feedback here?
         setExpandedCauseId(null);
     };
+
+    if (loading) {
+        return <div className="text-center py-20">Loading appeals...</div>;
+    }
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -57,8 +89,8 @@ export function DonationList() {
                         key={cat}
                         onClick={() => setActiveTab(cat)}
                         className={`flex-1 py-4 text-center font-bold text-lg transition-colors ${activeTab === cat
-                                ? "bg-[#0F5E36] text-white"
-                                : "bg-white text-[#0F5E36] hover:bg-green-50"
+                            ? "bg-[#0F5E36] text-white"
+                            : "bg-white text-[#0F5E36] hover:bg-green-50"
                             }`}
                     >
                         {cat}
@@ -106,8 +138,8 @@ export function DonationList() {
                                                         key={val}
                                                         onClick={() => { setAmount(val); setCustomAmount(""); }}
                                                         className={`py-3 rounded-lg font-bold border transition-all ${amount === val && !customAmount
-                                                                ? "bg-[#0F5E36] text-white border-[#0F5E36]"
-                                                                : "bg-white text-gray-700 border-gray-200 hover:border-[#0F5E36]"
+                                                            ? "bg-[#0F5E36] text-white border-[#0F5E36]"
+                                                            : "bg-white text-gray-700 border-gray-200 hover:border-[#0F5E36]"
                                                             }`}
                                                     >
                                                         £{val}
@@ -128,8 +160,8 @@ export function DonationList() {
                                                     className="flex-1 bg-[#0F5E36] hover:bg-[#0b4628] h-12 text-lg font-bold"
                                                 >
                                                     <div className="flex items-center gap-2">
-                                                        <ShoppingCart size={20} />
-                                                        Add to Cart
+                                                        <Heart size={20} />
+                                                        Add to Donation Heart
                                                     </div>
                                                 </Button>
                                                 <Button variant="outline" className="h-12 w-12 border-gray-300 text-gray-500">

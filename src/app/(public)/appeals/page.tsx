@@ -1,20 +1,54 @@
 "use client";
 
-import { useState } from "react";
-import { CAUSES } from "@/data/mockData";
+import { useState, useEffect } from "react";
+// import { CAUSES } from "@/data/mockData"; // Removed mock data
 import { AppealCard } from "@/components/AppealCard";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Filter } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const CATEGORIES = ["All", "Emergency", "Water", "Orphans", "Zakat", "Famine"];
 
 export default function AppealsPage() {
     const [activeCategory, setActiveCategory] = useState("All");
+    const [causes, setCauses] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCauses = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, "campaigns"));
+                const fetchedData = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    // Map Firestore fields to AppealCard props
+                    return {
+                        id: doc.id,
+                        title: data.title,
+                        description: data.description,
+                        image: data.imageUrl, // Mapped
+                        raised: data.raisedAmount || 0, // Mapped
+                        goal: data.goalAmount || 10000, // Mapped
+                        category: data.category,
+                        location: data.country,
+                        isUrgent: data.isUrgent
+                    };
+                });
+                setCauses(fetchedData);
+            } catch (error) {
+                console.error("Error fetching appeals:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCauses();
+    }, []);
 
     const filteredCauses = activeCategory === "All"
-        ? CAUSES
-        : CAUSES.filter(c => c.category === activeCategory);
+        ? causes
+        : causes.filter(c => c.category === activeCategory);
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
@@ -44,8 +78,8 @@ export default function AppealsPage() {
                             key={cat}
                             onClick={() => setActiveCategory(cat)}
                             className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-200 ${activeCategory === cat
-                                    ? "bg-[#0F5E36] text-white shadow-md shadow-green-900/20 transform scale-105"
-                                    : "bg-white text-gray-600 hover:bg-gray-100 border border-transparent hover:border-gray-200"
+                                ? "bg-[#0F5E36] text-white shadow-md shadow-green-900/20 transform scale-105"
+                                : "bg-white text-gray-600 hover:bg-gray-100 border border-transparent hover:border-gray-200"
                                 }`}
                         >
                             {cat}

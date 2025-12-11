@@ -64,7 +64,7 @@ export default function Navbar() {
 
                         {/* Cart Icon */}
                         <Link href="/donate" className="p-2 text-gray-600 hover:text-[#0F5E36] transition-colors relative">
-                            <ShoppingCart size={24} />
+                            <Heart size={24} />
                             {cartCount > 0 && (
                                 <span className="absolute top-0 right-0 bg-[#0F5E36] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                                     {cartCount}

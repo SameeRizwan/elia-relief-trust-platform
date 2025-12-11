@@ -15,8 +15,9 @@ import {
 
 const sidebarItems = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { name: "Campaigns", href: "/admin/campaigns", icon: HeartHandshake },
+    { name: "Appeals", href: "/admin/campaigns", icon: HeartHandshake },
     { name: "Donations", href: "/admin/donations", icon: BarChart3 },
+    { name: "Reports", href: "/admin/reports", icon: FileText },
     { name: "Orphans", href: "/admin/orphans", icon: Users },
     { name: "Users", href: "/admin/users", icon: Users },
     { name: "Settings", href: "/admin/settings", icon: Settings },

@@ -6,19 +6,56 @@ import Link from "next/link"; // Import Link
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 
+import { db } from "@/lib/firebase";
+import { collection, query, where, getDocs, limit } from "firebase/firestore";
+import { useEffect, useState } from "react";
+
 export function FundraisingSection() {
     const { addToCart } = useCart();
     const router = useRouter();
+    const [featured, setFeatured] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchFeatured = async () => {
+            try {
+                // Try to find an Urgent campaign first
+                const q = query(collection(db, "campaigns"), where("isUrgent", "==", true), limit(1));
+                const snapshot = await getDocs(q);
+
+                if (!snapshot.empty) {
+                    const doc = snapshot.docs[0];
+                    setFeatured({ id: doc.id, ...doc.data() });
+                } else {
+                    // Fallback to any campaign
+                    const fallbackQ = query(collection(db, "campaigns"), limit(1));
+                    const fallbackSnap = await getDocs(fallbackQ);
+                    if (!fallbackSnap.empty) {
+                        const doc = fallbackSnap.docs[0];
+                        setFeatured({ id: doc.id, ...doc.data() });
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching featured campaign:", error);
+            }
+        };
+        fetchFeatured();
+    }, []);
 
     const handleDonate = () => {
+        if (!featured) return;
         addToCart({
-            id: 'pakistan-flood',
-            title: 'Pakistan Emergency Flood',
-            amount: 50, // Default amount for quick action
+            id: featured.id,
+            title: featured.title,
+            amount: 50,
             type: 'single'
         });
-        router.push('/donate');
+        router.push('/donate'); // Or open cart?
     }
+
+    if (!featured) return null; // Or loading skeleton
+
+    // Calculate percentage for progress bar
+    const percentage = Math.min(((featured.raisedAmount || 0) / (featured.goalAmount || 1)) * 100, 100);
 
     return (
         <section className="py-24 bg-gray-50">
@@ -35,7 +72,7 @@ export function FundraisingSection() {
                     </div>
                     <Link href="/appeals">
                         <Button variant="outline" className="border-[#0F5E36] text-[#0F5E36] hover:bg-green-50 font-bold px-8 py-6 rounded-lg">
-                            See our campaigns
+                            View All Appeals
                         </Button>
                     </Link>
                 </div>
@@ -45,8 +82,8 @@ export function FundraisingSection() {
                     {/* Image Side */}
                     <div className="lg:w-1/2 relative min-h-[400px]">
                         <img
-                            src="https://images.unsplash.com/photo-1606092195730-5d7b9af1ef4d?q=80&w=2670&auto=format&fit=crop"
-                            alt="Pakistan Flood"
+                            src={featured.imageUrl || "https://images.unsplash.com/photo-1606092195730-5d7b9af1ef4d?q=80&w=2670&auto=format&fit=crop"}
+                            alt={featured.title}
                             className="absolute inset-0 w-full h-full object-cover"
                         />
                         <button className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-3 rounded-full text-gray-800 shadow-lg backdrop-blur-sm transition-all hidden lg:block">
@@ -60,9 +97,9 @@ export function FundraisingSection() {
                             <ChevronRight size={24} />
                         </button>
 
-                        <h3 className="text-3xl font-bold text-gray-900 mb-4">Pakistan Emergency Flood</h3>
-                        <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                            Over 500 dead, 740 injured, and 1,700 families homeless in 24 hours. Heavy rain, landslides and flash floods have caused Pakistan's deadliest downpour...
+                        <h3 className="text-3xl font-bold text-gray-900 mb-4">{featured.title}</h3>
+                        <p className="text-gray-600 text-lg mb-8 leading-relaxed line-clamp-3">
+                            {featured.description}
                         </p>
 
                         <div className="flex items-center gap-4 mb-8">
@@ -78,12 +115,12 @@ export function FundraisingSection() {
                         {/* Progress */}
                         <div className="space-y-2 mb-8">
                             <div className="flex justify-between items-end">
-                                <span className="text-3xl font-extrabold text-[#0F5E36]">£2,217.00</span>
-                                <span className="text-gray-400 font-medium">/ £50,000.00</span>
-                                <span className="text-gray-900 font-bold ml-auto"><span className="text-black text-xl">39</span> Donors</span>
+                                <span className="text-3xl font-extrabold text-[#0F5E36]">£{featured.raisedAmount?.toLocaleString()}</span>
+                                <span className="text-gray-400 font-medium">/ £{featured.goalAmount?.toLocaleString()}</span>
+                                <span className="text-gray-900 font-bold ml-auto"><span className="text-black text-xl">12</span> Donors</span>
                             </div>
                             <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                                <div className="bg-[#0F5E36] h-full rounded-full w-[4.4%]" />
+                                <div className="bg-[#0F5E36] h-full rounded-full" style={{ width: `${percentage}%` }} />
                             </div>
                         </div>
 

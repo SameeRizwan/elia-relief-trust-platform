@@ -20,7 +20,7 @@ export function IftaarSection() {
                     >
                         <div className="inline-flex items-center gap-2 bg-[#0F5E36] px-4 py-2 rounded-full mb-6">
                             <Moon size={18} />
-                            <span className="font-bold text-sm uppercase tracking-wide">Ramadan Campaign</span>
+                            <span className="font-bold text-sm uppercase tracking-wide">Ramadan Appeal</span>
                         </div>
 
                         <h2 className="text-4xl md:text-5xl font-extrabold leading-tight mb-6">

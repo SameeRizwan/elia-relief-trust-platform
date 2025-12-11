@@ -79,7 +79,7 @@ export function WhatWeDo() {
                         {/* Circular Image Container */}
                         <div className="relative w-[400px] h-[400px] md:w-[500px] md:h-[500px] rounded-full border-8 border-white shadow-2xl overflow-hidden z-10">
                             <Image
-                                src="https://images.unsplash.com/photo-1593113598332-cd288d649433?q=80&w=2070&auto=format&fit=crop"
+                                src="/assets/horn-of-africa-map.jpg"
                                 alt="Helping communities in the Horn of Africa"
                                 fill
                                 className="object-cover"

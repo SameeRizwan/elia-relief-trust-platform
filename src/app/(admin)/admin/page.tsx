@@ -10,6 +10,7 @@ export default function AdminPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
     const [stats, setStats] = useState({ totalDonations: 0, totalUsers: 0, families: 0 });
+    const [recentDonations, setRecentDonations] = useState<any[]>([]);
 
     useEffect(() => {
         if (!loading) {
@@ -17,21 +18,37 @@ export default function AdminPage() {
                 router.push("/login");
                 return;
             }
-            // Simple role check (in reality, check Firestore user role)
-            // For now, assume any logged in user can see this for DEMO puroposes 
-            // or maybe restrict by specific email if the user asked.
 
             const fetchStats = async () => {
-                // Mock stats fetching
-                const usersSnap = await getDocs(collection(db, "users"));
-                const familiesQuery = query(collection(db, "users"), where("isFamily", "==", true));
-                const familiesSnap = await getDocs(familiesQuery);
+                try {
+                    // Fetch Users
+                    const usersSnap = await getDocs(collection(db, "users"));
+                    const familiesQuery = query(collection(db, "users"), where("isFamily", "==", true));
+                    const familiesSnap = await getDocs(familiesQuery);
 
-                setStats({
-                    totalDonations: 25420, // Mocked for now as we don't save donations to DB yet
-                    totalUsers: usersSnap.size,
-                    families: familiesSnap.size
-                });
+                    // Fetch Donations
+                    const donationsSnap = await getDocs(collection(db, "donations"));
+                    let totalAmount = 0;
+                    const allDonations: any[] = [];
+
+                    donationsSnap.forEach(doc => {
+                        totalAmount += doc.data().amount || 0;
+                        allDonations.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    // Sort by date desc
+                    allDonations.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+                    setStats({
+                        totalDonations: totalAmount,
+                        totalUsers: usersSnap.size,
+                        families: familiesSnap.size
+                    });
+                    setRecentDonations(allDonations.slice(0, 5));
+
+                } catch (error) {
+                    console.error("Error fetching stats:", error);
+                }
             }
             fetchStats();
         }
@@ -47,8 +64,8 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-medium text-gray-500">Total Donations</h3>
-                    <p className="text-3xl font-bold text-[#0F5E36]">${stats.totalDonations.toLocaleString()}</p>
-                    <span className="text-green-500 text-sm font-medium">+12% from last month</span>
+                    <p className="text-3xl font-bold text-[#0F5E36]">£{stats.totalDonations.toLocaleString()}</p>
+                    <span className="text-green-500 text-sm font-medium">Lifetime received</span>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-medium text-gray-500">Registered Users</h3>
@@ -65,20 +82,29 @@ export default function AdminPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h3 className="font-bold text-lg mb-4 text-gray-800">Recent Activity</h3>
                 <div className="space-y-4">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="flex items-center justify-between py-3 border-b last:border-0 border-gray-100">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-[#0F5E36]/10 flex items-center justify-center text-[#0F5E36] font-bold">
-                                    <span className="text-sm">JD</span>
+                    {recentDonations.map(donation => {
+                        const appealTitle = donation.items && donation.items.length > 0
+                            ? donation.items[0].title + (donation.items.length > 1 ? ` +${donation.items.length - 1} more` : "")
+                            : "General Donation";
+
+                        return (
+                            <div key={donation.id} className="flex items-center justify-between py-3 border-b last:border-0 border-gray-100">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-[#0F5E36]/10 flex items-center justify-center text-[#0F5E36] font-bold">
+                                        <span className="text-sm">{(donation.donorName || "G").charAt(0)}</span>
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-gray-900">{donation.donorName || "Guest"} donated £{donation.amount}</p>
+                                        <p className="text-sm text-gray-500">{appealTitle}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="font-medium text-gray-900">John Doe donated $50</p>
-                                    <p className="text-sm text-gray-500">Clean Water Project</p>
-                                </div>
+                                <span className="text-sm text-gray-400">{new Date(donation.date).toLocaleDateString()}</span>
                             </div>
-                            <span className="text-sm text-gray-400">2 mins ago</span>
-                        </div>
-                    ))}
+                        );
+                    })}
+                    {recentDonations.length === 0 && (
+                        <p className="text-gray-500 text-center py-4">No recent activity.</p>
+                    )}
                 </div>
             </div>
         </div>
