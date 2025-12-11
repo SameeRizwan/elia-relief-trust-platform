@@ -36,8 +36,9 @@ export default function AdminDashboard() {
                     const allDonations: any[] = [];
 
                     donationsSnap.forEach(doc => {
-                        totalAmount += doc.data().amount || 0;
-                        allDonations.push({ id: doc.id, ...doc.data() });
+                        const data = doc.data();
+                        totalAmount += data.amount || 0;
+                        allDonations.push({ id: doc.id, ...data });
                     });
 
                     // Sort by date desc
@@ -45,10 +46,10 @@ export default function AdminDashboard() {
 
                     setStats({
                         totalDonations: totalAmount,
-                        totalUsers: usersSnap.size,
-                        families: familiesSnap.size
+                        registeredUsers: usersSnap.size,
+                        verifiedFamilies: familiesSnap.size,
+                        recentDonations: allDonations.slice(0, 5)
                     });
-                    setRecentDonations(allDonations.slice(0, 5));
 
                 } catch (error) {
                     console.error("Error fetching stats:", error);
@@ -73,12 +74,12 @@ export default function AdminDashboard() {
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-medium text-gray-500">Registered Users</h3>
-                    <p className="text-3xl font-bold text-[#0F5E36]">{stats.totalUsers}</p>
+                    <p className="text-3xl font-bold text-[#0F5E36]">{stats.registeredUsers}</p>
                     <span className="text-blue-500 text-sm font-medium">Active Community</span>
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <h3 className="text-sm font-medium text-gray-500">Verified Families</h3>
-                    <p className="text-3xl font-bold text-[#0F5E36]">{stats.families}</p>
+                    <p className="text-3xl font-bold text-[#0F5E36]">{stats.verifiedFamilies}</p>
                     <span className="text-orange-500 text-sm font-medium">Needs Attention</span>
                 </div>
             </div>
@@ -86,7 +87,7 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h3 className="font-bold text-lg mb-4 text-gray-800">Recent Activity</h3>
                 <div className="space-y-4">
-                    {recentDonations.map(donation => {
+                    {stats.recentDonations.map(donation => {
                         const appealTitle = donation.items && donation.items.length > 0
                             ? donation.items[0].title + (donation.items.length > 1 ? ` +${donation.items.length - 1} more` : "")
                             : "General Donation";
@@ -106,7 +107,7 @@ export default function AdminDashboard() {
                             </div>
                         );
                     })}
-                    {recentDonations.length === 0 && (
+                    {stats.recentDonations.length === 0 && (
                         <p className="text-gray-500 text-center py-4">No recent activity.</p>
                     )}
                 </div>

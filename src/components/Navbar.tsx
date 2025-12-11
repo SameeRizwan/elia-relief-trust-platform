@@ -42,10 +42,13 @@ export default function Navbar() {
                         <Link href="/appeals" className="text-base font-medium text-gray-700 hover:text-[#0F5E36] transition-colors">
                             Appeals
                         </Link>
-                        <Link href="/projects" className="text-base font-medium text-gray-700 hover:text-[#0F5E36] transition-colors">
+                        <Link href="/projects" className="text-gray-600 hover:text-[#0F5E36] font-medium transition-colors">
                             Projects
                         </Link>
-                        <Link href="/about" className="text-base font-medium text-gray-700 hover:text-[#0F5E36] transition-colors">
+                        <Link href="/zakat" className="text-gray-600 hover:text-[#0F5E36] font-medium transition-colors">
+                            Zakat
+                        </Link>
+                        <Link href="/about" className="text-gray-600 hover:text-[#0F5E36] font-medium transition-colors">
                             About Us
                         </Link>
                         <Link href="/contact" className="text-base font-medium text-gray-700 hover:text-[#0F5E36] transition-colors">

@@ -12,6 +12,10 @@ interface AppealFormProps {
     buttonText: string;
 }
 
+import { uploadImage } from "@/lib/storage"; // Import utility
+
+// ... imports
+
 export function AppealForm({ initialData, onSubmit, isLoading, buttonText }: AppealFormProps) {
     const [title, setTitle] = useState(initialData?.title || "");
     const [description, setDescription] = useState(initialData?.description || "");
@@ -21,6 +25,10 @@ export function AppealForm({ initialData, onSubmit, isLoading, buttonText }: App
     const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
     const [isUrgent, setIsUrgent] = useState(initialData?.isUrgent || false);
     const [isZakatEligible, setIsZakatEligible] = useState(initialData?.isZakatEligible || true);
+
+    // New state for file
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         if (initialData) {
@@ -37,13 +45,31 @@ export function AppealForm({ initialData, onSubmit, isLoading, buttonText }: App
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        let finalImageUrl = imageUrl;
+
+        if (imageFile) {
+            try {
+                setIsUploading(true);
+                const path = `campaigns/${Date.now()}_${imageFile.name}`;
+                finalImageUrl = await uploadImage(imageFile, path);
+            } catch (error) {
+                console.error("Upload failed", error);
+                alert("Image upload failed");
+                setIsUploading(false);
+                return;
+            } finally {
+                setIsUploading(false);
+            }
+        }
+
         await onSubmit({
             title,
             description,
             goalAmount: Number(targetAmount),
             category,
             country,
-            imageUrl,
+            imageUrl: finalImageUrl,
             isUrgent,
             isZakatEligible,
             slug: title.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, ""),
@@ -131,16 +157,47 @@ export function AppealForm({ initialData, onSubmit, isLoading, buttonText }: App
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                    <input
-                        required
-                        type="url"
-                        value={imageUrl}
-                        onChange={(e) => setImageUrl(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-[#0F5E36] focus:border-[#0F5E36]"
-                        placeholder="https://example.com/image.jpg"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Paste a public image link (Unsplash, etc.)</p>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Appeal Image</label>
+
+                    <div className="space-y-3">
+                        {/* File Upload */}
+                        <div className="flex items-center gap-4">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                        setImageFile(e.target.files[0]);
+                                    }
+                                }}
+                                className="block w-full text-sm text-gray-500
+                                    file:mr-4 file:py-2 file:px-4
+                                    file:rounded-full file:border-0
+                                    file:text-sm file:font-semibold
+                                    file:bg-green-50 file:text-[#0F5E36]
+                                    hover:file:bg-green-100"
+                            />
+                            {imageFile && <span className="text-xs text-green-600 font-medium">Selected: {imageFile.name} (Will upload on save)</span>}
+                        </div>
+
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                <div className="w-full border-t border-gray-200"></div>
+                            </div>
+                            <div className="relative flex justify-center">
+                                < span className="px-2 bg-white text-xs text-gray-500">OR use URL</span>
+                            </div>
+                        </div>
+
+                        {/* URL Input */}
+                        <input
+                            type="url"
+                            value={imageUrl}
+                            onChange={(e) => setImageUrl(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-[#0F5E36] focus:border-[#0F5E36]"
+                            placeholder="https://example.com/image.jpg"
+                        />
+                    </div>
                 </div>
 
                 <div className="flex gap-6 mt-2">
@@ -174,10 +231,10 @@ export function AppealForm({ initialData, onSubmit, isLoading, buttonText }: App
                     disabled={isLoading}
                     className="bg-[#0F5E36] hover:bg-[#0b4628] text-white min-w-[120px]"
                 >
-                    {isLoading ? <Loader2 className="animate-spin" /> : (
+                    {isLoading || isUploading ? <Loader2 className="animate-spin" /> : (
                         <>
                             <Save size={18} className="mr-2" />
-                            {buttonText}
+                            {isUploading ? "Uploading..." : buttonText}
                         </>
                     )}
                 </Button>

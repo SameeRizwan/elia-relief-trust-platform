@@ -7,6 +7,7 @@ export type CartItem = {
     title: string;
     amount: number;
     type: "single" | "monthly";
+    image?: string;
 };
 
 interface CartContextType {
