@@ -19,45 +19,41 @@ export default function AdminDashboard() {
     });
 
     useEffect(() => {
-        if (!loading && !user) {
-            router.push("/login");
-        } else if (user) {
-            // Fetch stats...
-            const fetchStats = async () => {
-                try {
-                    // Fetch Users
-                    const usersSnap = await getDocs(collection(db, "users"));
-                    const familiesQuery = query(collection(db, "users"), where("isFamily", "==", true));
-                    const familiesSnap = await getDocs(familiesQuery);
+        // Fetch stats...
+        const fetchStats = async () => {
+            try {
+                // Fetch Users
+                const usersSnap = await getDocs(collection(db, "users"));
+                const familiesQuery = query(collection(db, "users"), where("isFamily", "==", true));
+                const familiesSnap = await getDocs(familiesQuery);
 
-                    // Fetch Donations
-                    const donationsSnap = await getDocs(collection(db, "donations"));
-                    let totalAmount = 0;
-                    const allDonations: any[] = [];
+                // Fetch Donations
+                const donationsSnap = await getDocs(collection(db, "donations"));
+                let totalAmount = 0;
+                const allDonations: any[] = [];
 
-                    donationsSnap.forEach(doc => {
-                        const data = doc.data();
-                        totalAmount += data.amount || 0;
-                        allDonations.push({ id: doc.id, ...data });
-                    });
+                donationsSnap.forEach(doc => {
+                    const data = doc.data();
+                    totalAmount += data.amount || 0;
+                    allDonations.push({ id: doc.id, ...data });
+                });
 
-                    // Sort by date desc
-                    allDonations.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                // Sort by date desc
+                allDonations.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-                    setStats({
-                        totalDonations: totalAmount,
-                        registeredUsers: usersSnap.size,
-                        verifiedFamilies: familiesSnap.size,
-                        recentDonations: allDonations.slice(0, 5)
-                    });
+                setStats({
+                    totalDonations: totalAmount,
+                    registeredUsers: usersSnap.size,
+                    verifiedFamilies: familiesSnap.size,
+                    recentDonations: allDonations.slice(0, 5)
+                });
 
-                } catch (error) {
-                    console.error("Error fetching stats:", error);
-                }
+            } catch (error) {
+                console.error("Error fetching stats:", error);
             }
-            fetchStats();
         }
-    }, [user, loading, router]);
+        fetchStats();
+    }, []);
 
 
     if (loading) return <div className="p-8">Loading...</div>;
