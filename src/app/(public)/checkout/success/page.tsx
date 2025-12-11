@@ -46,6 +46,8 @@ export default function CheckoutSuccessPage() {
                         // 1. Save to Firestore
                         if (items.length > 0) {
                             try {
+                                const donationType = searchParams.get("donation_type") || "one-time";
+
                                 await addDoc(collection(db, "donations"), {
                                     amount: totalAmount, // Or paymentIntent.amount / 100
                                     items: items,
@@ -54,9 +56,22 @@ export default function CheckoutSuccessPage() {
                                     donorDetails: donorInfo,
                                     status: "Succeeded",
                                     paymentIntentId: paymentIntent.id,
+                                    frequency: donationType,
                                     createdAt: serverTimestamp(),
                                     date: new Date().toISOString()
                                 });
+
+                                if (donationType === 'monthly') {
+                                    await addDoc(collection(db, "subscriptions"), {
+                                        amount: totalAmount,
+                                        planName: items.length > 0 ? items[0].title : "Monthly Donation",
+                                        email: donorInfo ? donorInfo.email : "guest@example.com",
+                                        status: "Active",
+                                        startDate: new Date().toISOString(),
+                                        paymentIntentId: paymentIntent.id,
+                                        createdAt: serverTimestamp()
+                                    });
+                                }
 
                                 // 2. Send Email
                                 const appealTitle = items.length > 0 ? items[0].title + (items.length > 1 ? ` + ${items.length - 1} more` : "") : "Donation";

@@ -13,6 +13,7 @@ export default function UserDashboard() {
     const { user, loading } = useAuth();
     const router = useRouter();
     const [donations, setDonations] = useState<any[]>([]);
+    const [subscriptions, setSubscriptions] = useState<any[]>([]);
     const [stats, setStats] = useState({ totalDonated: 0, donationCount: 0 });
     const [isLoadingData, setIsLoadingData] = useState(true);
 
@@ -25,37 +26,34 @@ export default function UserDashboard() {
 
             const fetchData = async () => {
                 try {
-                    // Fetch donations where donorEmail matches
-                    // For demo, we might match by email or ID. 
-                    // Let's assume we use email for now as per checkout.
-                    const q = query(
+                    // Fetch Donations
+                    const donationsQuery = query(
                         collection(db, "donations"),
-                        // where("donorEmail", "==", user.email) // Uncomment in real auth
-                        // For DEMO: fetch all or just show the ones we just made if we can't match auth perfectly yet
-                        // Let's fetch ALL for guest display if user.email is missing, or just specific ones.
-                        // ACTUALLY: The checkout saved as "guest@example.com". 
-                        // If I am logged in, I need to see THOSE? Or my own?
-                        // Let's make the dashboard just show "guest@example.com" donations if user is admin/guest for now,
-                        // or just show ALL for visual verification since this is a demo.
-                        // BETTER: Filter by "guest@example.com" if that's what we used.
+                        where("donorEmail", "==", user.email)
                     );
+                    const donationsSnap = await getDocs(donationsQuery);
+                    const fetchedDonations = donationsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                    // Ideally: where("userId", "==", user.uid)
-
-                    const querySnapshot = await getDocs(collection(db, "donations"));
-                    const fetchedData = querySnapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    }));
-
-                    // Client side filter for demo if needed, or take all for visual pop
-                    const myDonations = fetchedData.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                    // Client side sort
+                    const sortedDonations = fetchedDonations.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
                     let total = 0;
-                    myDonations.forEach((d: any) => total += d.amount || 0);
+                    sortedDonations.forEach((d: any) => total += d.amount || 0);
 
-                    setDonations(myDonations);
-                    setStats({ totalDonated: total, donationCount: myDonations.length });
+                    setDonations(sortedDonations);
+                    setStats({ totalDonated: total, donationCount: sortedDonations.length });
+
+                    // Fetch Subscriptions (assuming 'subscriptions' collection exists)
+                    // Note: We need a mechanism to save subscriptions to Firestore. For now, we query the same 'donations' collection if we stored them there, or 'subscriptions'.
+                    // Let's assume user wants to see them. I will query 'subscriptions'.
+                    const subsQuery = query(
+                        collection(db, "subscriptions"),
+                        where("email", "==", user.email)
+                    );
+                    const subsSnap = await getDocs(subsQuery);
+                    const fetchedSubs = subsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setSubscriptions(fetchedSubs);
+
                 } catch (error) {
                     console.error("Error fetching user data:", error);
                 } finally {
@@ -102,6 +100,32 @@ export default function UserDashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* Active Subscriptions */}
+            {subscriptions.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-10">
+                    <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <h2 className="font-bold text-lg text-gray-900">Active Subscriptions</h2>
+                        <span className="bg-green-100 text-[#0F5E36] px-3 py-1 rounded-full text-xs font-bold">Monthly</span>
+                    </div>
+                    <div className="p-6">
+                        <div className="grid gap-4">
+                            {subscriptions.map(sub => (
+                                <div key={sub.id} className="flex justify-between items-center border p-4 rounded-lg">
+                                    <div>
+                                        <p className="font-bold text-gray-900">{sub.planName || "Monthly Donation"}</p>
+                                        <p className="text-sm text-gray-500">Started: {new Date(sub.startDate || Date.now()).toLocaleDateString()}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-bold text-[#0F5E36]">£{sub.amount}</p>
+                                        <p className="text-xs text-gray-400">/ month</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Recent Donations */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

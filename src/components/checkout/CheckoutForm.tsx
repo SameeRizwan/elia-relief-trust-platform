@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
-export function CheckoutForm({ amount }: { amount: number }) {
+export function CheckoutForm({ amount, donationType }: { amount: number, donationType: 'one-time' | 'monthly' }) {
     const stripe = useStripe();
     const elements = useElements();
 
@@ -62,7 +62,7 @@ export function CheckoutForm({ amount }: { amount: number }) {
             elements,
             confirmParams: {
                 // Make sure to change this to your payment completion page
-                return_url: `${window.location.origin}/checkout/success`,
+                return_url: `${window.location.origin}/checkout/success?donation_type=${donationType}`,
             },
         });
 

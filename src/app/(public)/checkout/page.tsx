@@ -21,6 +21,7 @@ export default function CheckoutPage() {
 
     // Checkout Mode: 'selection' (login vs guest), 'guest' (form), 'user' (form)
     const [checkoutMode, setCheckoutMode] = useState<'selection' | 'guest' | 'user'>('selection');
+    const [donationType, setDonationType] = useState<'one-time' | 'monthly'>('one-time');
 
     // Donor Information State
     const [donorInfo, setDonorInfo] = useState({
@@ -67,12 +68,19 @@ export default function CheckoutPage() {
     const handleInfoSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Create PaymentIntent
+        // Create PaymentIntent or Subscription
         try {
-            const res = await fetch("/api/create-payment-intent", {
+            const endpoint = donationType === 'monthly' ? "/api/create-subscription" : "/api/create-payment-intent";
+
+            const res = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ items, amount: totalAmount }),
+                body: JSON.stringify({
+                    items,
+                    amount: totalAmount,
+                    email: donorInfo.email,
+                    name: `${donorInfo.firstName} ${donorInfo.lastName}`.trim(),
+                }),
             });
             const data = await res.json();
 
@@ -82,6 +90,7 @@ export default function CheckoutPage() {
                 localStorage.setItem("donorInfo", JSON.stringify(donorInfo));
                 setStep(2);
             } else {
+                console.error(data.error);
                 alert("Failed to initialize payment. Please check your connection.");
             }
         } catch (error) {
@@ -183,6 +192,24 @@ export default function CheckoutPage() {
                                         </div>
                                     )}
 
+                                    {/* Donation Frequency Toggle */}
+                                    <div className="flex p-1 bg-gray-100 rounded-lg mb-6">
+                                        <button
+                                            type="button"
+                                            onClick={() => setDonationType('one-time')}
+                                            className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${donationType === 'one-time' ? 'bg-white text-[#0F5E36] shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                        >
+                                            One-time
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setDonationType('monthly')}
+                                            className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${donationType === 'monthly' ? 'bg-white text-[#0F5E36] shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                                        >
+                                            Monthly
+                                        </button>
+                                    </div>
+
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
@@ -229,7 +256,7 @@ export default function CheckoutPage() {
                                     </div>
 
                                     <button type="submit" className="w-full bg-[#0F5E36] text-white py-3 rounded-lg font-bold hover:bg-[#0b4628] transition-colors mt-4">
-                                        Continue to Payment
+                                        Continue to Payment {donationType === 'monthly' && '(Monthly)'}
                                     </button>
                                 </form>
                             )}
@@ -243,7 +270,7 @@ export default function CheckoutPage() {
                                     Payment Method
                                 </h2>
                                 <Elements options={options} stripe={stripePromise}>
-                                    <CheckoutForm amount={totalAmount} />
+                                    <CheckoutForm amount={totalAmount} donationType={donationType} />
                                 </Elements>
                             </div>
                         )}

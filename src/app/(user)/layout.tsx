@@ -1,5 +1,5 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import Sidebar from "@/components/dashboard/Sidebar";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 
 export default function UserLayout({
     children,
@@ -7,12 +7,17 @@ export default function UserLayout({
     children: React.ReactNode;
 }) {
     return (
-        <>
-            <Navbar />
-            <main className="min-h-screen bg-gray-50">
-                {children}
-            </main>
-            <Footer />
-        </>
+        <div className="min-h-screen bg-gray-50 flex">
+            {/* Sidebar */}
+            <Sidebar />
+
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300">
+                <DashboardHeader />
+                <main className="flex-1 p-6">
+                    {children}
+                </main>
+            </div>
+        </div>
     );
 }

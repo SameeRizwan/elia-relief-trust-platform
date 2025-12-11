@@ -6,8 +6,10 @@ import { Search, ShoppingCart, Heart } from "lucide-react";
 import { useState } from "react";
 import { SearchModal } from "@/components/SearchModal";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
+    const { user } = useAuth();
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const { items } = useCart();
 
@@ -77,9 +79,15 @@ export default function Navbar() {
 
                         <div className="h-6 w-px bg-gray-200 mx-1"></div>
 
-                        <Link href="/login" className="text-sm font-bold text-gray-600 hover:text-gray-900 hidden sm:block">
-                            Login
-                        </Link>
+                        {user ? (
+                            <Link href="/dashboard" className="text-sm font-bold text-gray-600 hover:text-[#0F5E36] hidden sm:block">
+                                Dashboard
+                            </Link>
+                        ) : (
+                            <Link href="/login" className="text-sm font-bold text-gray-600 hover:text-gray-900 hidden sm:block">
+                                Login
+                            </Link>
+                        )}
                         <Link href="/donate" className="bg-[#0F5E36] text-white px-6 py-3 rounded-full text-base font-bold hover:bg-[#0b4628] transition-all shadow-md hover:shadow-lg flex items-center gap-2">
                             Donate Now
                             <Heart size={16} fill="currentColor" />
