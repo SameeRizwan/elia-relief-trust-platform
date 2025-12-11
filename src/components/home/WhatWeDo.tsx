@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Calendar, Globe2 } from "lucide-react";
+import { MapPin, Heart, Globe2 } from "lucide-react";
 import Image from "next/image";
 
 export function WhatWeDo() {
@@ -18,23 +18,37 @@ export function WhatWeDo() {
                         viewport={{ once: true }}
                     >
                         <h4 className="text-[#0F5E36] font-bold uppercase tracking-widest text-sm mb-4">
-                            What Elia Relief Trust Do?
+                            About Elia Relief Trust
                         </h4>
                         <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-8">
-                            <span className="text-[#0F5E36]">Elia Relief Trust</span> is a Humanitarian Aid and Disaster Relief Organisation in the UK
+                            Serving the
+                            <span className="text-[#0F5E36]"> Horn of Africa</span> with Compassion
                         </h2>
+                        <p className="text-gray-600 text-lg leading-relaxed mb-6">
+                            <strong>Elia Relief Trust</strong> is a UK-based charity dedicated to relieving poverty and supporting vulnerable communities, with a strong focus on <strong className="text-[#0F5E36]">Somalia, Ethiopia, and Kenya</strong>.
+                        </p>
                         <p className="text-gray-600 text-lg leading-relaxed mb-10">
-                            Not only do we provide immediate relief to those in need, but we also focus on projects that empower and give individuals the opportunity to transform their lives for the better. With your support, they gain the skills and tools needed to build a brighter future, free from the grip of poverty.
+                            Our work centres around providing food, clean water, education, and essential support, while also investing in long-term projects that help communities become more self-sufficient and resilient.
                         </p>
 
                         <div className="space-y-8">
                             <div className="flex items-start gap-4">
                                 <div className="w-16 h-16 bg-[#0F5E36]/10 rounded-full flex items-center justify-center text-[#0F5E36] shrink-0">
-                                    <Calendar size={28} />
+                                    <MapPin size={28} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-xl text-gray-900 mb-1">We have been operating for more than a decade</h3>
-                                    <p className="text-gray-500">Established in 2013, serving humanity with integrity.</p>
+                                    <h3 className="font-bold text-xl text-gray-900 mb-1">Focused on the Horn of Africa</h3>
+                                    <p className="text-gray-500">Somalia, Ethiopia, Kenya — where the need is greatest.</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start gap-4">
+                                <div className="w-16 h-16 bg-[#0F5E36]/10 rounded-full flex items-center justify-center text-[#0F5E36] shrink-0">
+                                    <Heart size={28} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-xl text-gray-900 mb-1">Faith-Inspired, Inclusive Impact</h3>
+                                    <p className="text-gray-500">Guided by Islamic values, serving all in need.</p>
                                 </div>
                             </div>
 
@@ -43,8 +57,8 @@ export function WhatWeDo() {
                                     <Globe2 size={28} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-xl text-gray-900 mb-1">Provide and facilitate aid across more than 30 countries worldwide</h3>
-                                    <p className="text-gray-500">From Gaza to Yemen, we go where the need is greatest.</p>
+                                    <h3 className="font-bold text-xl text-gray-900 mb-1">UK-Based, Global Reach</h3>
+                                    <p className="text-gray-500">Fundraising in England, delivering aid to Africa.</p>
                                 </div>
                             </div>
                         </div>
@@ -66,16 +80,16 @@ export function WhatWeDo() {
                         <div className="relative w-[400px] h-[400px] md:w-[500px] md:h-[500px] rounded-full border-8 border-white shadow-2xl overflow-hidden z-10">
                             <Image
                                 src="https://images.unsplash.com/photo-1593113598332-cd288d649433?q=80&w=2070&auto=format&fit=crop"
-                                alt="Volunteer"
+                                alt="Helping communities in the Horn of Africa"
                                 fill
                                 className="object-cover"
                             />
                         </div>
 
-                        {/* Floating Logo Badge */}
+                        {/* Floating Badge */}
                         <div className="absolute bottom-10 -left-10 md:left-0 z-20 bg-white p-4 rounded-2xl shadow-xl">
                             <div className="text-center">
-                                <span className="block text-3xl font-bold text-[#0F5E36]">10+</span>
+                                <span className="block text-3xl font-bold text-[#0F5E36]">4+</span>
                                 <span className="text-xs text-gray-500 font-bold uppercase">Years of Service</span>
                             </div>
                         </div>

@@ -37,10 +37,11 @@ export function Hero() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="text-5xl md:text-7xl font-extrabold leading-tight mb-6"
+                        className="text-4xl md:text-6xl font-extrabold leading-tight mb-6"
                     >
-                        Hope For <br />
-                        <span className="text-[#0F5E36]">Humanity</span>
+                        Restoring Dignity.<br />
+                        Building Hope.<br />
+                        <span className="text-[#0F5E36]">Transforming Lives.</span>
                     </motion.h1>
 
                     <motion.p
@@ -49,7 +50,7 @@ export function Hero() {
                         transition={{ delay: 0.2 }}
                         className="text-xl text-white font-medium mb-8 leading-relaxed drop-shadow-md"
                     >
-                        Elia Relief Trust is dedicated to serving the most vulnerable. Your donation provides life-saving food, water, and shelter.
+                        Providing food, clean water, education, and long-term support to vulnerable communities across the <strong>Horn of Africa</strong>.
                     </motion.p>
 
                     <motion.div
@@ -58,9 +59,14 @@ export function Hero() {
                         transition={{ delay: 0.3 }}
                         className="flex flex-wrap gap-4"
                     >
+                        <Link href="/donate">
+                            <Button size="lg" className="bg-[#0F5E36] hover:bg-[#0a4428] text-white rounded-full px-8 py-6 text-lg font-bold transition-all shadow-lg">
+                                Donate Now
+                            </Button>
+                        </Link>
                         <Link href="/appeals">
                             <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black rounded-full px-8 py-6 text-lg font-bold bg-transparent transition-all">
-                                View Active Appeals
+                                Support Our Projects
                             </Button>
                         </Link>
                     </motion.div>
