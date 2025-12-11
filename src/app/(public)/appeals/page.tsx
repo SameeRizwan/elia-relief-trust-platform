@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-// import { CAUSES } from "@/data/mockData"; // Removed mock data
+import { useSearchParams } from "next/navigation";
 import { AppealCard } from "@/components/AppealCard";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,9 +12,19 @@ import { db } from "@/lib/firebase";
 const CATEGORIES = ["All", "Emergency", "Water", "Orphans", "Zakat", "Famine"];
 
 export default function AppealsPage() {
-    const [activeCategory, setActiveCategory] = useState("All");
+    const searchParams = useSearchParams();
+    const categoryFromUrl = searchParams.get("category");
+
+    const [activeCategory, setActiveCategory] = useState(categoryFromUrl || "All");
     const [causes, setCauses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Update activeCategory when URL changes
+    useEffect(() => {
+        if (categoryFromUrl && CATEGORIES.includes(categoryFromUrl)) {
+            setActiveCategory(categoryFromUrl);
+        }
+    }, [categoryFromUrl]);
 
     useEffect(() => {
         const fetchCauses = async () => {

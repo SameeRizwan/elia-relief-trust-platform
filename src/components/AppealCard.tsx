@@ -29,8 +29,8 @@ export function AppealCard({ id, title, description, image, raised, goal, catego
             viewport={{ once: true }}
             className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full"
         >
-            {/* Image Container with Hover Zoom */}
-            <div className="relative h-64 overflow-hidden">
+            {/* Image Container with Hover Zoom - Clickable to detail page */}
+            <Link href={`/appeals/${id}`} className="block relative h-64 overflow-hidden cursor-pointer">
                 <Image
                     src={image}
                     alt={title}
@@ -47,13 +47,13 @@ export function AppealCard({ id, title, description, image, raised, goal, catego
                     </div>
                 )}
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-            </div>
+            </Link>
 
             {/* Content */}
             <div className="p-6 flex flex-col flex-1">
-                <div className="flex justify-between items-start mb-3">
+                <Link href={`/appeals/${id}`} className="block mb-3">
                     <h3 className="text-xl font-bold text-gray-900 line-clamp-1 group-hover:text-[#0F5E36] transition-colors">{title}</h3>
-                </div>
+                </Link>
 
                 <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-2">
                     {description}

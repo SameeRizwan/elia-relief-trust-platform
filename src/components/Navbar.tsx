@@ -2,15 +2,25 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ShoppingCart, Heart } from "lucide-react";
+import { Search, ShoppingCart, Heart, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { SearchModal } from "@/components/SearchModal";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 
+const APPEAL_CATEGORIES = [
+    { name: "All Appeals", href: "/appeals" },
+    { name: "Emergency", href: "/appeals?category=Emergency" },
+    { name: "Water", href: "/appeals?category=Water" },
+    { name: "Orphans", href: "/appeals?category=Orphans" },
+    { name: "Zakat", href: "/appeals?category=Zakat" },
+    { name: "Famine", href: "/appeals?category=Famine" },
+];
+
 export default function Navbar() {
     const { user } = useAuth();
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isAppealsOpen, setIsAppealsOpen] = useState(false);
     const { items } = useCart();
 
     // Safety check for cart items length to avoid hydration mismatch if needed, 
@@ -41,9 +51,34 @@ export default function Navbar() {
                     </Link>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/appeals" className="text-base font-medium text-gray-700 hover:text-[#0F5E36] transition-colors">
-                            Appeals
-                        </Link>
+                        {/* Appeals Dropdown */}
+                        <div
+                            className="relative"
+                            onMouseEnter={() => setIsAppealsOpen(true)}
+                            onMouseLeave={() => setIsAppealsOpen(false)}
+                        >
+                            <button className="flex items-center gap-1 text-base font-medium text-gray-700 hover:text-[#0F5E36] transition-colors">
+                                Appeals
+                                <ChevronDown size={16} className={`transition-transform ${isAppealsOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isAppealsOpen && (
+                                <div className="absolute top-full left-0 pt-2 min-w-[200px]">
+                                    <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 overflow-hidden">
+                                        {APPEAL_CATEGORIES.map((cat) => (
+                                            <Link
+                                                key={cat.name}
+                                                href={cat.href}
+                                                className="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-green-50 hover:text-[#0F5E36] transition-colors"
+                                            >
+                                                {cat.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <Link href="/projects" className="text-gray-600 hover:text-[#0F5E36] font-medium transition-colors">
                             Projects
                         </Link>
@@ -88,9 +123,10 @@ export default function Navbar() {
                                 Login
                             </Link>
                         )}
-                        <Link href="/donate" className="bg-[#0F5E36] text-white px-6 py-3 rounded-full text-base font-bold hover:bg-[#0b4628] transition-all shadow-md hover:shadow-lg flex items-center gap-2">
-                            Donate Now
-                            <Heart size={16} fill="currentColor" />
+                        <Link href="/donate" className="bg-[#0F5E36] text-white px-3 py-2 sm:px-6 sm:py-3 rounded-full text-xs sm:text-base font-bold hover:bg-[#0b4628] transition-all shadow-md hover:shadow-lg flex items-center gap-1 sm:gap-2">
+                            <span className="hidden sm:inline">Donate Now</span>
+                            <span className="sm:hidden">Donate</span>
+                            <Heart size={14} className="sm:w-4 sm:h-4" fill="currentColor" />
                         </Link>
                     </div>
                 </div>
