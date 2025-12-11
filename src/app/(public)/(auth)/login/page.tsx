@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, UserCredential } from "firebase/auth";
+import { auth, db } from "@/lib/firebase"; // Import db
+import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"; // Firestore imports
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -13,10 +14,40 @@ export default function LoginPage() {
     const [error, setError] = useState("");
     const router = useRouter();
 
+    // Helper to save user to Firestore
+    const saveUserToFirestore = async (user: any) => {
+        try {
+            const userRef = doc(db, "users", user.uid);
+            // Check if user exists first to not overwrite specific fields if needed, 
+            // but merge: true handles adding new fields or updating existing ones nicely.
+            // We'll update lastLogin every time.
+            await setDoc(userRef, {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName || "",
+                photoURL: user.photoURL || "",
+                lastLogin: serverTimestamp(),
+            }, { merge: true }); // Merge prevents overwriting existing data like roles
+
+            // If it's a new user (no createdAt), we could add it, but merge works well.
+            // To be precise about createdAt only on first creation:
+            const docSnap = await getDoc(userRef);
+            if (!docSnap.exists()) {  // This check is redundant with merge for updates, but good for specific 'createdAt'
+                await setDoc(userRef, { createdAt: serverTimestamp() }, { merge: true });
+            }
+
+        } catch (error) {
+            console.error("Error saving user to Firestore:", error);
+            // Don't block login if stats fail, but good to know
+        }
+    };
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            // Ensure firestore doc exists even for email login (if it was created via backend or manual)
+            await saveUserToFirestore(userCredential.user);
             router.push("/dashboard");
         } catch (err: any) {
             setError("Invalid credentials. Please try again.");
@@ -26,7 +57,8 @@ export default function LoginPage() {
     const handleGoogleLogin = async () => {
         try {
             const provider = new GoogleAuthProvider();
-            await signInWithPopup(auth, provider);
+            const result = await signInWithPopup(auth, provider);
+            await saveUserToFirestore(result.user);
             router.push("/dashboard");
         } catch (err: any) {
             setError("Google Sign-In failed. Please try again.");
