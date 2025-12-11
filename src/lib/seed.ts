@@ -1,7 +1,5 @@
-
-import { initializedAdmin } from "./firebaseAdmin"; // Assuming we have admin setup or use client sdk in a node script? 
-// Actually, standard firebase text might be easier to run via a temporary UI component or I can just use the previous SeedButton approach.
-// Let's create a temporary seeding component that I can trigger via browser.
+// Seed script for development - uses client Firebase SDK
+// Can be triggered via a UI component or console
 
 import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
