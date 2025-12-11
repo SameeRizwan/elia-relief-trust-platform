@@ -117,7 +117,7 @@ export function FundraisingSection() {
                             <div className="flex justify-between items-end">
                                 <span className="text-3xl font-extrabold text-[#0F5E36]">£{featured.raisedAmount?.toLocaleString()}</span>
                                 <span className="text-gray-400 font-medium">/ £{featured.goalAmount?.toLocaleString()}</span>
-                                <span className="text-gray-900 font-bold ml-auto"><span className="text-black text-xl">12</span> Donors</span>
+                                <span className="text-gray-900 font-bold ml-auto"><span className="text-black text-xl">{featured.donorCount || 0}</span> Donors</span>
                             </div>
                             <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
                                 <div className="bg-[#0F5E36] h-full rounded-full" style={{ width: `${percentage}%` }} />

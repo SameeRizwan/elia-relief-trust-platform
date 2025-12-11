@@ -32,7 +32,8 @@ export default function AppealsPage() {
                         goal: data.goalAmount || 10000, // Mapped
                         category: data.category,
                         location: data.country,
-                        isUrgent: data.isUrgent
+                        isUrgent: data.isUrgent,
+                        donorCount: data.donorCount || 0 // Mapped
                     };
                 });
                 setCauses(fetchedData);

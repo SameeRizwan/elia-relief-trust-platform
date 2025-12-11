@@ -15,9 +15,10 @@ interface AppealProps {
     goal: number;
     category: string;
     index: number;
+    donorCount?: number;
 }
 
-export function AppealCard({ id, title, description, image, raised, goal, category, index }: AppealProps) {
+export function AppealCard({ id, title, description, image, raised, goal, category, index, donorCount = 0 }: AppealProps) {
     const percentage = Math.min(100, Math.round((raised / goal) * 100));
 
     return (
@@ -39,6 +40,12 @@ export function AppealCard({ id, title, description, image, raised, goal, catego
                 <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-[#0F5E36]">
                     {category}
                 </div>
+                {donorCount > 0 && (
+                    <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium text-white flex items-center gap-1.5">
+                        <Heart className="w-3 h-3 fill-current" />
+                        {donorCount} Donors
+                    </div>
+                )}
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
             </div>
 
