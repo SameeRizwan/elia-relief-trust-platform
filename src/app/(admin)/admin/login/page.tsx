@@ -1,16 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { Loader2, Lock, Mail, AlertCircle } from "lucide-react";
+import { Loader2, Lock, User, AlertCircle } from "lucide-react";
 import Image from "next/image";
 
 export default function AdminLoginPage() {
     const router = useRouter();
-    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -20,29 +17,20 @@ export default function AdminLoginPage() {
         setLoading(true);
         setError("");
 
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        // Hardcoded admin credentials
+        const ADMIN_USERNAME = "admin";
+        const ADMIN_PASSWORD = "Elia@2024!";
 
-            // Check if user is admin
-            const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-
-            if (userDoc.exists() && userDoc.data()?.role === "admin") {
-                router.push("/admin");
-            } else {
-                // Not an admin - sign them out
-                await auth.signOut();
-                setError("Access denied. You are not authorized to access the admin panel.");
-            }
-        } catch (err: any) {
-            console.error("Login error:", err);
-            if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-                setError("Invalid email or password.");
-            } else {
-                setError("An error occurred. Please try again.");
-            }
-        } finally {
-            setLoading(false);
+        if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+            // Store admin session in localStorage
+            localStorage.setItem("isAdminLoggedIn", "true");
+            localStorage.setItem("adminLoginTime", Date.now().toString());
+            router.push("/admin");
+        } else {
+            setError("Invalid username or password");
         }
+
+        setLoading(false);
     };
 
     return (
@@ -88,17 +76,17 @@ export default function AdminLoginPage() {
                     <form onSubmit={handleLogin} className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Email
+                                Username
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                 <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    type="text"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
                                     required
                                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0F5E36] focus:border-transparent outline-none"
-                                    placeholder="admin@example.com"
+                                    placeholder="admin"
                                 />
                             </div>
                         </div>

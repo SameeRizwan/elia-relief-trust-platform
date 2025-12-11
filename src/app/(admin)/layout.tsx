@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 
 export default function AdminLayout({
@@ -11,20 +10,43 @@ export default function AdminLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const { user, loading, isAdmin, logout } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Don't redirect if on login page
-        if (pathname === "/admin/login") return;
-
-        if (!loading) {
-            if (!user || !isAdmin) {
-                router.push("/admin/login");
-            }
+        // Don't check auth on login page
+        if (pathname === "/admin/login") {
+            setLoading(false);
+            return;
         }
-    }, [user, loading, isAdmin, router, pathname]);
+
+        // Check if admin is logged in via localStorage
+        const isAdminLoggedIn = localStorage.getItem("isAdminLoggedIn");
+        const loginTime = localStorage.getItem("adminLoginTime");
+
+        // Session expires after 24 hours
+        const SESSION_DURATION = 24 * 60 * 60 * 1000;
+        const isSessionValid = loginTime && (Date.now() - parseInt(loginTime)) < SESSION_DURATION;
+
+        if (isAdminLoggedIn === "true" && isSessionValid) {
+            setIsAuthenticated(true);
+        } else {
+            // Clear expired session
+            localStorage.removeItem("isAdminLoggedIn");
+            localStorage.removeItem("adminLoginTime");
+            router.push("/admin/login");
+        }
+
+        setLoading(false);
+    }, [pathname, router]);
+
+    const handleLogout = () => {
+        localStorage.removeItem("isAdminLoggedIn");
+        localStorage.removeItem("adminLoginTime");
+        router.push("/admin/login");
+    };
 
     // Show loading while checking auth
     if (loading) {
@@ -40,8 +62,8 @@ export default function AdminLayout({
         return <>{children}</>;
     }
 
-    // If not admin, show nothing (redirect will happen)
-    if (!user || !isAdmin) {
+    // If not authenticated, show nothing (redirect will happen)
+    if (!isAuthenticated) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <Loader2 className="animate-spin text-[#0F5E36]" size={48} />
@@ -57,7 +79,7 @@ export default function AdminLayout({
                     <h2 className="text-sm font-medium text-gray-500">Welcome Back, Admin</h2>
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={logout}
+                            onClick={handleLogout}
                             className="text-sm text-gray-500 hover:text-red-600 transition-colors"
                         >
                             Logout
@@ -74,3 +96,4 @@ export default function AdminLayout({
         </div>
     );
 }
+
