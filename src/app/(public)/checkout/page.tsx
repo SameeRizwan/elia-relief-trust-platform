@@ -5,16 +5,22 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { useCart } from "@/context/CartContext";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, UserCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
 
 // Replace with your publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
 
 export default function CheckoutPage() {
     const { items, totalAmount } = useCart();
+    const { user, loading } = useAuth();
     const router = useRouter();
     const [clientSecret, setClientSecret] = useState("");
+
+    // Checkout Mode: 'selection' (login vs guest), 'guest' (form), 'user' (form)
+    const [checkoutMode, setCheckoutMode] = useState<'selection' | 'guest' | 'user'>('selection');
 
     // Donor Information State
     const [donorInfo, setDonorInfo] = useState({
@@ -35,6 +41,28 @@ export default function CheckoutPage() {
             // router.push("/appeals");
         }
     }, [items, router]);
+
+    // Handle Authentication Logic
+    useEffect(() => {
+        if (!loading) {
+            if (user) {
+                setCheckoutMode('user');
+                // Pre-fill info if available (assuming user object has display name/email)
+                // If you store more profile data in firestore 'users' collection, you might fetch it here.
+                // For now, basic auth info:
+                const names = user.displayName?.split(' ') || ["", ""];
+                setDonorInfo(prev => ({
+                    ...prev,
+                    firstName: names[0] || prev.firstName,
+                    lastName: names.slice(1).join(' ') || prev.lastName,
+                    email: user.email || prev.email
+                }));
+            } else {
+                // If not logged in, keep at selection (default) or if user already chose guest, stay guest
+                if (checkoutMode === 'user') setCheckoutMode('selection');
+            }
+        }
+    }, [user, loading]);
 
     const handleInfoSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -73,6 +101,14 @@ export default function CheckoutPage() {
         appearance,
     };
 
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="animate-spin text-[#0F5E36]" size={48} />
+            </div>
+        );
+    }
+
     if (items.length === 0) {
         return (
             <div className="container mx-auto py-24 text-center">
@@ -80,6 +116,43 @@ export default function CheckoutPage() {
                 <p>Please add some appeals to your donation cart.</p>
             </div>
         );
+    }
+
+    // Checking Options View
+    if (checkoutMode === 'selection' && !user) {
+        return (
+            <div className="bg-gray-50 min-h-screen py-12 flex items-center justify-center">
+                <div className="container mx-auto px-4 max-w-4xl">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">How would you like to checkout?</h1>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Guest Option */}
+                        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 text-center hover:border-[#0F5E36] transition-colors cursor-pointer group" onClick={() => setCheckoutMode('guest')}>
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-green-50 transition-colors">
+                                <User className="w-8 h-8 text-gray-600 group-hover:text-[#0F5E36]" />
+                            </div>
+                            <h2 className="text-xl font-bold text-gray-900 mb-2">Guest Checkout</h2>
+                            <p className="text-gray-500 mb-6">No account needed. Just enter your details and donate securely.</p>
+                            <button className="w-full py-3 rounded-lg border-2 border-gray-200 font-bold text-gray-700 group-hover:border-[#0F5E36] group-hover:text-[#0F5E36] transition-all">
+                                Continue as Guest
+                            </button>
+                        </div>
+
+                        {/* Login Option */}
+                        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 text-center hover:border-[#0F5E36] transition-colors cursor-pointer group">
+                            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <UserCircle className="w-8 h-8 text-blue-600" />
+                            </div>
+                            <h2 className="text-xl font-bold text-gray-900 mb-2">Registered User</h2>
+                            <p className="text-gray-500 mb-6">Login to access your saved details and donation history.</p>
+                            <Link href="/login?redirect=/checkout" className="block w-full py-3 rounded-lg bg-[#0F5E36] text-white font-bold hover:bg-[#0b4628] transition-all">
+                                Login to Donate
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -104,6 +177,12 @@ export default function CheckoutPage() {
 
                             {step === 1 && (
                                 <form onSubmit={handleInfoSubmit} className="space-y-4">
+                                    {user && (
+                                        <div className="bg-blue-50 text-blue-800 p-3 rounded-lg text-sm mb-4">
+                                            Logged in as <strong>{user.email}</strong>
+                                        </div>
+                                    )}
+
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
