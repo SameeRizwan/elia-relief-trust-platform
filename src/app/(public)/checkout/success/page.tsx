@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import { useCart } from "@/context/CartContext";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, updateDoc, increment } from "firebase/firestore";
 import { sendDonationEmail } from "@/lib/email";
 import { CheckCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -71,6 +71,19 @@ export default function CheckoutSuccessPage() {
                                         paymentIntentId: paymentIntent.id,
                                         createdAt: serverTimestamp()
                                     });
+                                }
+
+                                // Update Campaign Progress
+                                for (const item of items) {
+                                    if (item.id) {
+                                        const campaignRef = doc(db, "campaigns", item.id);
+                                        // Use updateDoc to atomically increment
+                                        // We use unknown cast for increment because typescript sometimes complains about field value compatibility in simplified definitions
+                                        await updateDoc(campaignRef, {
+                                            raisedAmount: increment(item.amount),
+                                            donorCount: increment(1)
+                                        });
+                                    }
                                 }
 
                                 // 2. Send Email
