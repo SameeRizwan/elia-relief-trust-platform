@@ -1,12 +1,20 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-    apiVersion: "2025-11-17.clover",
-    // typescript: true,
-});
-
 export async function POST(request: Request) {
+    // Check if Stripe key is configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+        console.error("STRIPE_SECRET_KEY is not configured");
+        return NextResponse.json(
+            { error: "Payment service not configured. Please contact support." },
+            { status: 500 }
+        );
+    }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: "2025-11-17.clover",
+    });
+
     try {
         const { amount, items, email, name } = await request.json();
 
