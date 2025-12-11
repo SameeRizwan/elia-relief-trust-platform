@@ -3,25 +3,37 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Search, ShoppingCart, Heart, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SearchModal } from "@/components/SearchModal";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-
-const APPEAL_CATEGORIES = [
-    { name: "All Appeals", href: "/appeals" },
-    { name: "Emergency", href: "/appeals?category=Emergency" },
-    { name: "Water", href: "/appeals?category=Water" },
-    { name: "Orphans", href: "/appeals?category=Orphans" },
-    { name: "Zakat", href: "/appeals?category=Zakat" },
-    { name: "Famine", href: "/appeals?category=Famine" },
-];
+import { collection, getDocs, limit, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function Navbar() {
     const { user } = useAuth();
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isAppealsOpen, setIsAppealsOpen] = useState(false);
+    const [campaigns, setCampaigns] = useState<any[]>([]);
     const { items } = useCart();
+
+    // Fetch campaigns for dropdown
+    useEffect(() => {
+        const fetchCampaigns = async () => {
+            try {
+                const q = query(collection(db, "campaigns"), limit(6));
+                const snapshot = await getDocs(q);
+                const data = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    title: doc.data().title,
+                }));
+                setCampaigns(data);
+            } catch (error) {
+                console.error("Error fetching campaigns:", error);
+            }
+        };
+        fetchCampaigns();
+    }, []);
 
     // Safety check for cart items length to avoid hydration mismatch if needed, 
     // but simplified here. Using 0 as default if undefined.
@@ -63,15 +75,21 @@ export default function Navbar() {
                             </button>
 
                             {isAppealsOpen && (
-                                <div className="absolute top-full left-0 pt-2 min-w-[200px]">
+                                <div className="absolute top-full left-0 pt-2 min-w-[220px]">
                                     <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 overflow-hidden">
-                                        {APPEAL_CATEGORIES.map((cat) => (
+                                        <Link
+                                            href="/appeals"
+                                            className="block px-4 py-2.5 text-sm font-bold text-[#0F5E36] hover:bg-green-50 transition-colors border-b border-gray-100"
+                                        >
+                                            View All Appeals
+                                        </Link>
+                                        {campaigns.map((campaign) => (
                                             <Link
-                                                key={cat.name}
-                                                href={cat.href}
-                                                className="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-green-50 hover:text-[#0F5E36] transition-colors"
+                                                key={campaign.id}
+                                                href={`/appeals/${campaign.id}`}
+                                                className="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-green-50 hover:text-[#0F5E36] transition-colors truncate"
                                             >
-                                                {cat.name}
+                                                {campaign.title}
                                             </Link>
                                         ))}
                                     </div>
