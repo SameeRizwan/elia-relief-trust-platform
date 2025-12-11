@@ -12,7 +12,7 @@ export default function EditAppealPage() {
     const router = useRouter();
     const params = useParams();
     const [isLoading, setIsLoading] = useState(false);
-    const [initialData, setInitialData] = useState(null);
+    const [initialData, setInitialData] = useState<any>(null);
 
     useEffect(() => {
         const fetchAppeal = async () => {
