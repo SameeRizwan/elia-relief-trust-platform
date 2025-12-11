@@ -99,7 +99,7 @@ export default function CampaignsPage() {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="#" className="text-[#0F5E36] hover:text-[#0b4628]">Edit</a>
+                                    <Link href={`/admin/campaigns/${campaign.id}/edit`} className="text-[#0F5E36] hover:text-[#0b4628]">Edit</Link>
                                 </td>
                             </tr>
                         ))}

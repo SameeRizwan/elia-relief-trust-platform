@@ -6,19 +6,23 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-export default function AdminPage() {
+import { seedData } from "@/lib/seed"; // Add import
+
+export default function AdminDashboard() {
     const { user, loading } = useAuth();
     const router = useRouter();
-    const [stats, setStats] = useState({ totalDonations: 0, totalUsers: 0, families: 0 });
-    const [recentDonations, setRecentDonations] = useState<any[]>([]);
+    const [stats, setStats] = useState({
+        totalDonations: 0,
+        registeredUsers: 0,
+        verifiedFamilies: 0,
+        recentDonations: [] as any[]
+    });
 
     useEffect(() => {
-        if (!loading) {
-            if (!user) {
-                router.push("/login");
-                return;
-            }
-
+        if (!loading && !user) {
+            router.push("/login");
+        } else if (user) {
+            // Fetch stats...
             const fetchStats = async () => {
                 try {
                     // Fetch Users
