@@ -7,13 +7,15 @@ import { UserCircle, Clock, Heart } from "lucide-react";
 import { Donation } from "@/types";
 import { formatDistanceToNow } from "date-fns";
 
-export function RecentContributions() {
+export function RecentContributions({ campaignId }: { campaignId?: string }) {
     const [donations, setDonations] = useState<any[]>([]);
     const [filter, setFilter] = useState<'recent' | 'top'>('recent');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchDonations = async () => {
+            if (!campaignId) return;
+
             setLoading(true);
             try {
                 // Determine query based on filter
@@ -21,18 +23,28 @@ export function RecentContributions() {
                 let q;
 
                 if (filter === 'top') {
-                    q = query(donationsRef, orderBy("amount", "desc"), limit(10));
+                    // Fetch top amounts globally (limit 50 to have enough buffer for filtering)
+                    q = query(donationsRef, orderBy("amount", "desc"), limit(50));
                 } else {
-                    q = query(donationsRef, orderBy("createdAt", "desc"), limit(10));
+                    // Fetch recent globally
+                    q = query(donationsRef, orderBy("createdAt", "desc"), limit(50));
                 }
 
                 const snapshot = await getDocs(q);
-                const fetchedDonations = snapshot.docs.map(doc => ({
+                let fetchedDonations = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
 
-                setDonations(fetchedDonations);
+                // Client-side filter
+                if (campaignId) {
+                    fetchedDonations = fetchedDonations.filter((d: any) =>
+                        d.campaignIds && Array.isArray(d.campaignIds) && d.campaignIds.includes(campaignId)
+                    );
+                }
+
+                // Slice to final limit
+                setDonations(fetchedDonations.slice(0, 10));
             } catch (error) {
                 console.error("Error fetching donations:", error);
             } finally {
@@ -41,7 +53,7 @@ export function RecentContributions() {
         };
 
         fetchDonations();
-    }, [filter]);
+    }, [filter, campaignId]);
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-8">

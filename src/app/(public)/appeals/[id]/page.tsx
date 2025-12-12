@@ -176,6 +176,9 @@ export default function CampaignDetailPage() {
                                 <p className="text-gray-600">{campaign.country}</p>
                             </div>
                         )}
+
+                        {/* Recent Contributions */}
+                        <RecentContributions campaignId={campaign.id} />
                     </div>
 
                     {/* Right: Donation CTA */}
