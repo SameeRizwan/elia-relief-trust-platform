@@ -11,7 +11,10 @@ import { CheckCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string).catch((err) => {
+    console.warn("Failed to load Stripe.js (likely network issue):", err);
+    return null;
+});
 
 export default function CheckoutSuccessPage() {
     const searchParams = useSearchParams();

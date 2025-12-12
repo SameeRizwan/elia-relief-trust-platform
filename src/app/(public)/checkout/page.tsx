@@ -5,19 +5,26 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { useCart } from "@/context/CartContext";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
+import { ExpressDonationButton } from "@/components/checkout/ExpressDonationButton";
 import { Loader2, User, UserCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 
-// Replace with your publishable key
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
+// Replace with your publ// Initialize Stripe
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string).catch((err) => {
+    console.warn("Failed to load Stripe.js (likely network issue):", err);
+    return null;
+});
 
 export default function CheckoutPage() {
     const { items, totalAmount } = useCart();
     const { user, loading } = useAuth();
     const router = useRouter();
     const [clientSecret, setClientSecret] = useState("");
+
+    // Setup an initial "Express" intent secret immediately for the buttons
+    const [expressSecret, setExpressSecret] = useState("");
 
     // Checkout Mode: 'selection' (login vs guest), 'guest' (form), 'user' (form)
     const [checkoutMode, setCheckoutMode] = useState<'selection' | 'guest' | 'user'>('selection');
@@ -42,6 +49,29 @@ export default function CheckoutPage() {
             // router.push("/appeals");
         }
     }, [items, router]);
+
+    // Initialize Express Payment Intent (Guest / Initial)
+    useEffect(() => {
+        if (totalAmount > 0 && !expressSecret) {
+            // Create a generic intent for the express buttons
+            fetch("/api/create-payment-intent", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    items,
+                    amount: totalAmount,
+                    // No email/name sent initially for express flow
+                }),
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.clientSecret) {
+                        setExpressSecret(data.clientSecret);
+                    }
+                })
+                .catch(err => console.error("Error creating express intent", err));
+        }
+    }, [totalAmount, items, expressSecret]);
 
     // Handle Authentication Logic
     useEffect(() => {
@@ -106,7 +136,12 @@ export default function CheckoutPage() {
         },
     };
     const options = {
-        clientSecret,
+        clientSecret: clientSecret, // For Step 2 manual flow
+        appearance,
+    };
+
+    const expressOptions = {
+        clientSecret: expressSecret, // For Step 1 express flow
         appearance,
     };
 
@@ -133,6 +168,15 @@ export default function CheckoutPage() {
             <div className="bg-gray-50 min-h-screen py-12 flex items-center justify-center">
                 <div className="container mx-auto px-4 max-w-4xl">
                     <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">How would you like to checkout?</h1>
+
+                    {/* Express Checkout Button at Top Level */}
+                    {expressSecret && (
+                        <div className="max-w-md mx-auto mb-10 w-full">
+                            <Elements options={expressOptions} stripe={stripePromise}>
+                                <ExpressDonationButton amount={totalAmount} clientSecret={expressSecret} />
+                            </Elements>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Guest Option */}
@@ -262,7 +306,7 @@ export default function CheckoutPage() {
                             )}
                         </div>
 
-                        {/* Step 2: Payment */}
+                        {/* Step 2: Payment (Manual) */}
                         {step === 2 && clientSecret && (
                             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 animate-in fade-in slide-in-from-bottom-4">
                                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-6">
@@ -270,7 +314,7 @@ export default function CheckoutPage() {
                                     Payment Method
                                 </h2>
                                 <Elements options={options} stripe={stripePromise}>
-                                    <CheckoutForm amount={totalAmount} donationType={donationType} />
+                                    <CheckoutForm amount={totalAmount} donationType={donationType} clientSecret={clientSecret} />
                                 </Elements>
                             </div>
                         )}
