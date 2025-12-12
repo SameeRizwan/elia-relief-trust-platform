@@ -86,6 +86,10 @@ export function CheckoutForm({ amount, donationType, clientSecret }: { amount: n
             applePay: 'plain',
             googlePay: 'plain',
         },
+        wallets: {
+            applePay: 'always',
+            googlePay: 'always',
+        },
         layout: {
             maxColumns: 1,
             maxRows: 0,
