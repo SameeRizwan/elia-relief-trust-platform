@@ -43,10 +43,11 @@ export async function POST(request: Request) {
             currency: "gbp",
             customer: customerId,
             // Restrict to 'card' to remove Revolut/Amazon Pay but keep Google/Apple Pay (wallets included in card)
-            // payment_method_types: ['card'],
-            automatic_payment_methods: {
-                enabled: true,
-            },
+            // Restrict to 'card' to remove Revolut/Amazon Pay but keep Google/Apple Pay (wallets included in card)
+            payment_method_types: ['card'],
+            // automatic_payment_methods: {
+            //     enabled: true,
+            // },
             metadata: {
                 // Add useful metadata about the donation
                 items_summary: items.map((i: any) => i.title).join(", ").substring(0, 500),

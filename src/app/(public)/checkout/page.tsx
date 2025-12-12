@@ -140,6 +140,7 @@ export default function CheckoutPage() {
     const options = {
         clientSecret: clientSecret, // For Step 2 manual flow
         appearance,
+        paymentMethodOrder: ['card', 'apple_pay', 'google_pay'], // Prioritize these, effectively pushing Link down or out
     };
 
     const expressOptions = {

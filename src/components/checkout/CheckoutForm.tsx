@@ -97,37 +97,55 @@ export function CheckoutForm({ amount, donationType, clientSecret }: { amount: n
     } as const;
 
     return (
-        <form id="payment-form" onSubmit={handleSubmit} className="space-y-6">
-            <PaymentElement id="payment-element" options={paymentElementOptions} />
+    const [elementsReady, setElementsReady] = useState({ payment: false, express: false });
+    const isReady = elementsReady.payment && elementsReady.express;
 
-            <Button
-                disabled={isLoading || !stripe || !elements}
-                id="submit"
-                className="w-full bg-[#0F5E36] hover:bg-[#0b4628] h-12 text-lg font-bold"
-            >
-                {isLoading ? <Loader2 className="animate-spin mr-2" /> : `Pay £${amount.toLocaleString()}`}
-            </Button>
-            {message && <div id="payment-message" className="text-red-500 text-sm mt-2">{message}</div>}
+    return (
+        <form id="payment-form" onSubmit={handleSubmit} className="space-y-6 relative min-h-[300px]">
+            {/* Global Loader until both are ready */}
+            {!isReady && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-50">
+                    <Loader2 className="animate-spin text-[#0F5E36]" size={48} />
+                </div>
+            )}
 
-            {/* Express Checkout Element (Apple Pay, Google Pay, Link) */}
-            <div className="mt-6 pt-6 border-t border-gray-100">
-                <ExpressCheckoutElement
-                    options={expressCheckoutOptions}
-                    onConfirm={async (event) => {
-                        if (!stripe || !elements) return;
+            <div className={!isReady ? 'opacity-0' : 'opacity-100 transition-opacity duration-300'}>
+                <PaymentElement
+                    id="payment-element"
+                    options={paymentElementOptions}
+                    onReady={() => setElementsReady(prev => ({ ...prev, payment: true }))}
+                />
 
-                        const { error } = await stripe.confirmPayment({
-                            elements,
-                            clientSecret: clientSecret,
-                            confirmParams: {
-                                return_url: `${window.location.origin}/checkout/success?donation_type=${donationType}`,
-                            },
-                        });
+                <Button
+                    disabled={isLoading || !stripe || !elements || !isReady}
+                    id="submit"
+                    className="w-full bg-[#0F5E36] hover:bg-[#0b4628] h-12 text-lg font-bold mt-6"
+                >
+                    {isLoading ? <Loader2 className="animate-spin mr-2" /> : `Pay £${amount.toLocaleString()}`}
+                </Button>
+                {message && <div id="payment-message" className="text-red-500 text-sm mt-2">{message}</div>}
 
-                        if (error) {
-                            setMessage(error.message || "Payment failed");
-                        }
-                    }} />
+                {/* Express Checkout Element (Apple Pay, Google Pay) */}
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                    <ExpressCheckoutElement
+                        options={expressCheckoutOptions}
+                        onReady={() => setElementsReady(prev => ({ ...prev, express: true }))}
+                        onConfirm={async (event) => {
+                            if (!stripe || !elements) return;
+
+                            const { error } = await stripe.confirmPayment({
+                                elements,
+                                clientSecret: clientSecret,
+                                confirmParams: {
+                                    return_url: `${window.location.origin}/checkout/success?donation_type=${donationType}`,
+                                },
+                            });
+
+                            if (error) {
+                                setMessage(error.message || "Payment failed");
+                            }
+                        }} />
+                </div>
             </div>
         </form>
     );
