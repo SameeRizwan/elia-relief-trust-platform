@@ -16,7 +16,8 @@ export async function POST(request: Request) {
     });
 
     try {
-        const { amount, items, email, name } = await request.json();
+        const requestBody = await request.json();
+        const { amount, items, email, name, comment } = requestBody;
 
         // Calculate order amount (though client sent it, ideally validation happens here)
         // For now, trust the client's 'amount' for MVP, but strictly should recalc from database
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
             metadata: {
                 // Add useful metadata about the donation
                 items_summary: items.map((i: any) => i.title).join(", ").substring(0, 500),
+                comment: requestBody.comment ? requestBody.comment.substring(0, 500) : "", // Store comment
             },
         });
 

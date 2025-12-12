@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Heart, ArrowLeft, Share2, Check, Users, Target, Calendar } from "lucide-react";
 import Link from "next/link";
 import { AppealCard } from "@/components/AppealCard";
+import { RecentContributions } from "@/components/campaign/RecentContributions";
 
 export default function CampaignDetailPage() {
     const { id } = useParams();

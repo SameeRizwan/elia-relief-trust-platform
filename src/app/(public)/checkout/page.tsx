@@ -39,7 +39,8 @@ export default function CheckoutPage() {
         address: "",
         city: "",
         postcode: "",
-        giftAid: false
+        giftAid: false,
+        comment: ""
     });
     const [step, setStep] = useState(1); // 1: Info, 2: Payment
 
@@ -110,6 +111,7 @@ export default function CheckoutPage() {
                     amount: totalAmount,
                     email: donorInfo.email,
                     name: `${donorInfo.firstName} ${donorInfo.lastName}`.trim(),
+                    comment: donorInfo.comment, // Pass comment to API
                 }),
             });
             const data = await res.json();
@@ -297,6 +299,16 @@ export default function CheckoutPage() {
                                                 I am a UK taxpayer and understand that if I pay less Income Tax and/or Capital Gains Tax in the current tax year than the amount of Gift Aid claimed on all my donations it is my responsibility to pay any difference.
                                             </div>
                                         </label>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Leave a message (optional)</label>
+                                        <textarea
+                                            className="w-full p-2 border rounded-md h-24 text-sm"
+                                            placeholder="Why are you supporting this cause?"
+                                            value={donorInfo.comment}
+                                            onChange={e => setDonorInfo({ ...donorInfo, comment: e.target.value })}
+                                        />
                                     </div>
 
                                     <button type="submit" className="w-full bg-[#0F5E36] text-white py-3 rounded-lg font-bold hover:bg-[#0b4628] transition-colors mt-4">

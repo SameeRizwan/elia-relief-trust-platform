@@ -57,6 +57,7 @@ export default function CheckoutSuccessPage() {
                                     donorName: donorInfo ? `${donorInfo.firstName} ${donorInfo.lastName}` : "Guest Donor",
                                     donorEmail: donorInfo ? donorInfo.email : "guest@example.com",
                                     donorDetails: donorInfo,
+                                    comment: (paymentIntent as any).metadata?.comment || "", // Save comment
                                     status: "Succeeded",
                                     paymentIntentId: paymentIntent.id,
                                     frequency: donationType,
