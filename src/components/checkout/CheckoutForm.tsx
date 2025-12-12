@@ -16,6 +16,8 @@ export function CheckoutForm({ amount, donationType, clientSecret }: { amount: n
 
     const [message, setMessage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [elementsReady, setElementsReady] = useState({ payment: false, express: false });
+    const isReady = elementsReady.payment && elementsReady.express;
 
     useEffect(() => {
         if (!stripe) {
@@ -95,10 +97,6 @@ export function CheckoutForm({ amount, donationType, clientSecret }: { amount: n
             maxRows: 0,
         }
     } as const;
-
-    return (
-    const [elementsReady, setElementsReady] = useState({ payment: false, express: false });
-    const isReady = elementsReady.payment && elementsReady.express;
 
     return (
         <form id="payment-form" onSubmit={handleSubmit} className="space-y-6 relative min-h-[300px]">
