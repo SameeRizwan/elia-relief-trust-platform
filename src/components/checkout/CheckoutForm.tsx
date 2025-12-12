@@ -91,6 +91,7 @@ export function CheckoutForm({ amount, donationType, clientSecret }: { amount: n
         wallets: {
             applePay: 'always',
             googlePay: 'always',
+            link: 'never', // Explicitly disable Link button
         },
         layout: {
             maxColumns: 1,
