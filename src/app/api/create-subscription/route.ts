@@ -61,23 +61,32 @@ export async function POST(request: Request) {
             }
         });
 
-        console.log("Subscription created:", JSON.stringify(subscription, null, 2));
+        let paymentIntent: string | Stripe.PaymentIntent | null | undefined;
+        let invoice: Stripe.Invoice | string | null | undefined = subscription.latest_invoice;
 
-        if (subscription.latest_invoice && typeof subscription.latest_invoice !== 'string') {
-            const invoice = subscription.latest_invoice as any;
-            const paymentIntent = invoice.payment_intent;
+        if (invoice && typeof invoice === 'string') {
+            // Fallback: If expansion failed, retrieve manually
+            invoice = await stripe.invoices.retrieve(invoice, {
+                expand: ['payment_intent']
+            });
+        }
 
-            if (paymentIntent && typeof paymentIntent !== 'string') {
-                const pi = paymentIntent as Stripe.PaymentIntent;
-                return NextResponse.json({
-                    clientSecret: pi.client_secret,
-                    subscriptionId: subscription.id
-                });
-            } else {
-                console.error("Payment intent missing or string:", paymentIntent);
+        if (invoice && typeof invoice !== 'string') {
+            paymentIntent = (invoice as any).payment_intent;
+
+            if (paymentIntent && typeof paymentIntent === 'string') {
+                // Fallback: Retrieve PI if still string (unlikely if expanded above, but safe)
+                paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
             }
+        }
+
+        if (paymentIntent && typeof paymentIntent !== 'string') {
+            return NextResponse.json({
+                clientSecret: paymentIntent.client_secret,
+                subscriptionId: subscription.id
+            });
         } else {
-            console.error("Latest invoice missing or string:", subscription.latest_invoice);
+            console.error("Failed to extract payment intent. Subscription:", subscription.id);
         }
 
         return NextResponse.json({ error: "Failed to create subscription payment intent" }, { status: 500 });

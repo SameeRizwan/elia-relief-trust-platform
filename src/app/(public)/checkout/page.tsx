@@ -7,7 +7,7 @@ import { useCart } from "@/context/CartContext";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { ExpressDonationButton } from "@/components/checkout/ExpressDonationButton";
 import { Loader2, User, UserCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 
@@ -21,6 +21,7 @@ export default function CheckoutPage() {
     const { items, totalAmount } = useCart();
     const { user, loading } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [clientSecret, setClientSecret] = useState("");
 
     // Setup an initial "Express" intent secret immediately for the buttons
@@ -29,6 +30,13 @@ export default function CheckoutPage() {
     // Checkout Mode: 'selection' (login vs guest), 'guest' (form), 'user' (form)
     const [checkoutMode, setCheckoutMode] = useState<'selection' | 'guest' | 'user'>('selection');
     const [donationType, setDonationType] = useState<'one-time' | 'monthly'>('one-time');
+
+    useEffect(() => {
+        const type = searchParams.get('type');
+        if (type === 'monthly' || type === 'one-time') {
+            setDonationType(type);
+        }
+    }, [searchParams]);
 
     // Donor Information State
     const [donorInfo, setDonorInfo] = useState({
