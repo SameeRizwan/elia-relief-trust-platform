@@ -61,6 +61,8 @@ export async function POST(request: Request) {
             }
         });
 
+        console.log("Subscription created:", JSON.stringify(subscription, null, 2));
+
         if (subscription.latest_invoice && typeof subscription.latest_invoice !== 'string') {
             const invoice = subscription.latest_invoice as any;
             const paymentIntent = invoice.payment_intent;
@@ -71,7 +73,11 @@ export async function POST(request: Request) {
                     clientSecret: pi.client_secret,
                     subscriptionId: subscription.id
                 });
+            } else {
+                console.error("Payment intent missing or string:", paymentIntent);
             }
+        } else {
+            console.error("Latest invoice missing or string:", subscription.latest_invoice);
         }
 
         return NextResponse.json({ error: "Failed to create subscription payment intent" }, { status: 500 });
