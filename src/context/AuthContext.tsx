@@ -27,9 +27,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 // Check if user is admin from Firestore
                 try {
                     const userDoc = await getDoc(doc(db, "users", user.uid));
-                    if (userDoc.exists() && userDoc.data()?.role === "admin") {
-                        setIsAdmin(true);
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+
+                        // Check if user is banned
+                        if (userData?.status === 'banned') {
+                            await signOut(auth);
+                            setUser(null);
+                            setIsAdmin(false);
+                            setLoading(false);
+                            return;
+                        }
+
+                        if (userData?.role === "admin") {
+                            setIsAdmin(true);
+                        } else {
+                            setIsAdmin(false);
+                        }
                     } else {
+                        // Decide: Create a user doc if missing? Or just non-admin. 
+                        // For now, assume if no doc, they are just a basic user (or maybe we should create one).
+                        // But for existing logic, just set not admin.
                         setIsAdmin(false);
                     }
                 } catch (error) {

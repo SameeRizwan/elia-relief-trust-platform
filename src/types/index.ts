@@ -6,6 +6,7 @@ export interface UserProfile {
     displayName?: string;
     phoneNumber?: string;
     role: UserRole;
+    status?: 'active' | 'banned' | 'pending';
     createdAt: string;
     address?: {
         line1: string;
