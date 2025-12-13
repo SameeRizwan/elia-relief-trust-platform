@@ -61,21 +61,61 @@ export async function POST(request: Request) {
             }
         });
 
+        if (subscription.status === 'active') {
+            // Subscription is already active (maybe 0 check or trial? Unlikely here but possible)
+            // or paid immediately with existing customer options.
+            // But we usually want to force a payment flow for 3DS or new card.
+            // existingCustomers might have valid card.
+            // If active, we might not need a client secret, but return one if PI exists for confirmation.
+            console.log("Subscription automatically active/paid:", subscription.id);
+        }
+
         let paymentIntent: string | Stripe.PaymentIntent | null | undefined;
         let invoice: Stripe.Invoice | string | null | undefined = subscription.latest_invoice;
 
         if (invoice && typeof invoice === 'string') {
-            // Fallback: If expansion failed, retrieve manually
+            // Fallback: If expansion failed or returned ID, retrieve manually
+            console.log("Retrieving invoice manually:", invoice);
             invoice = await stripe.invoices.retrieve(invoice, {
                 expand: ['payment_intent']
             });
         }
 
         if (invoice && typeof invoice !== 'string') {
+            console.log("Invoice status:", invoice.status, "ID:", invoice.id);
+
+            // If invoice is draft, finalize it
+            if (invoice.status === 'draft') {
+                console.log("Finalizing draft invoice...");
+                invoice = await stripe.invoices.finalizeInvoice(invoice.id, { expand: ['payment_intent'] });
+            }
+
             paymentIntent = (invoice as any).payment_intent;
 
-            if (paymentIntent && typeof paymentIntent === 'string') {
-                // Fallback: Retrieve PI if still string (unlikely if expanded above, but safe)
+            // If invoice is open but has NO payment_intent, create one manually
+            if (!paymentIntent && invoice.status === 'open' && invoice.amount_remaining > 0) {
+                console.log("No PaymentIntent on open invoice. Creating one manually...");
+
+                const newPaymentIntent = await stripe.paymentIntents.create({
+                    amount: invoice.amount_remaining,
+                    currency: invoice.currency,
+                    customer: customer.id,
+                    metadata: {
+                        invoice_id: invoice.id,
+                        subscription_id: subscription.id
+                    },
+                    // Setting up for future payments
+                    setup_future_usage: 'off_session',
+                    // Automatic payment methods
+                    automatic_payment_methods: {
+                        enabled: true,
+                    },
+                });
+
+                paymentIntent = newPaymentIntent;
+            } else if (paymentIntent && typeof paymentIntent === 'string') {
+                // Fallback: Retrieve PI if still string
+                console.log("Retrieving PI manually:", paymentIntent);
                 paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
             }
         }
@@ -85,11 +125,22 @@ export async function POST(request: Request) {
                 clientSecret: paymentIntent.client_secret,
                 subscriptionId: subscription.id
             });
-        } else {
-            console.error("Failed to extract payment intent. Subscription:", subscription.id);
         }
 
-        return NextResponse.json({ error: "Failed to create subscription payment intent" }, { status: 500 });
+        // If we are here, we failed to get a PI.
+        // Check if invoice is paid (amount_remaining=0)
+        if (invoice && typeof invoice !== 'string' && invoice.status === 'paid') {
+            return NextResponse.json({
+                message: "Subscription created and paid previously",
+                subscriptionId: subscription.id,
+                status: 'succeeded'
+            });
+        }
+
+        console.error("Failed to extract payment intent. Subscription:", subscription.id, "Invoice:", JSON.stringify(invoice));
+        return NextResponse.json({
+            error: "Failed to create subscription payment intent. " + (invoice && typeof invoice !== 'string' ? `Invoice status: ${invoice.status}` : "")
+        }, { status: 500 });
 
     } catch (error: any) {
         console.error("Subscription Error:", error);
