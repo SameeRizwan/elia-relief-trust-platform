@@ -67,6 +67,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     const clearCart = () => {
         setItems([]);
+        localStorage.removeItem("donation_cart");
     };
 
     const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
